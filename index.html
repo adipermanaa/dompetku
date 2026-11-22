@@ -5437,13 +5437,17 @@
           throw new Error('File CSV kosong atau tidak memiliki baris data');
         }
 
-        // Cari baris header tabel secara otomatis (melewati baris judul laporan di baris ke-1 jika ada)
+        // Cari baris header tabel secara otomatis (memindai hingga 25 baris pertama agar melewati ringkasan saldo atas)
         let headerRowIdx = 0;
-        const headerKeywords = ['tanggal', 'date', 'jenis', 'judul', 'kategori', 'nominal', 'jumlah', 'pemasukan', 'pengeluaran', 'rekening'];
-        for (let idx = 0; idx < Math.min(rows.length, 6); idx++) {
+        const headerKeywords = [
+          'tanggal', 'date', 'jenis', 'judul', 'payee', 'kategori', 'category',
+          'nominal', 'jumlah', 'amount', 'pemasukan', 'pengeluaran', 'debit', 'credit',
+          'rekening', 'account', 'subcategory'
+        ];
+        for (let idx = 0; idx < Math.min(rows.length, 25); idx++) {
           const joinedRow = rows[idx].map((c) => c.toLowerCase().trim()).join('|');
           const matchCount = headerKeywords.filter((kw) => joinedRow.includes(kw)).length;
-          if (rows[idx].length >= 3 && matchCount >= 2) {
+          if (rows[idx].length >= 3 && matchCount >= 3) {
             headerRowIdx = idx;
             break;
           }
@@ -5458,9 +5462,9 @@
         const colType = findCol(['jenis', 'tipe', 'type', 'arus', 'mutasi', 'dk', 'd/k']);
         const colTitle = findCol(['judul', 'title', 'deskripsi', 'description', 'uraian', 'transaksi', 'nama transaksi', 'item']);
         const colParty = findCol(['dari/kepada', 'dari', 'kepada', 'pihak', 'payee', 'merchant', 'penerima', 'pengirim', 'toko']);
-        const colCategory = findCol(['kategori', 'category', 'pos']);
+        const colCategory = findCol([/^kategori$/, /^category$/, 'kategori', 'category', 'pos']);
         const colSubCategory = findCol(['sub kategori', 'subkategori', 'subcategory', 'sub_category', 'sub']);
-        const colAccount = findCol(['rekening', 'account', 'dompet', 'wallet', 'akun', 'sumber', 'dari rekening']);
+        const colAccount = findCol([/^rekening$/, /^account$/, 'rekening', 'account', 'dompet', 'wallet', 'akun', 'sumber', 'dari rekening']);
         const colToAccount = findCol(['rekening tujuan', 'ke rekening', 'tujuan', 'to account', 'to_account']);
         const colAmount = findCol(['nominal', 'jumlah', 'amount', 'nilai', 'total', 'harga', 'rp']);
         const colIncome = findCol(['pemasukan', 'masuk', 'income', 'kredit', 'credit', 'debit masuk']);
@@ -5469,6 +5473,24 @@
 
         const accountMap = new Map();
         const categoryMap = new Map();
+        const detectedBalancesMap = new Map();
+
+        // Ekstrak ringkasan saldo awal rekening jika tersedia di baris-baris sebelum header tabel
+        for (let pre = 0; pre < headerRowIdx; pre++) {
+          const preRow = rows[pre];
+          if (preRow.length >= 2) {
+            const labelCell = (preRow[0] || '').trim();
+            const valCell = (preRow[1] || '').trim();
+            if (
+              labelCell &&
+              valCell &&
+              !/account balances|total|saldo total|ringkasan/i.test(labelCell) &&
+              /(?:idr|rp|\d)/i.test(valCell)
+            ) {
+              detectedBalancesMap.set(labelCell.toLowerCase(), parseLocalizedAmount(valCell));
+            }
+          }
+        }
 
         const getOrCreateAccount = (rawName) => {
           const clean = (rawName || '').trim() || 'Dompet Utama';
@@ -5529,6 +5551,7 @@
         };
 
         const parsedTransactions = [];
+        const pendingTransfers = [];
 
         for (let r = headerRowIdx + 1; r < rows.length; r++) {
           const row = rows[r];
@@ -5536,20 +5559,13 @@
 
           const rawType = getVal(colType).toLowerCase();
           const rawToAcc = getVal(colToAccount).trim();
+          const rawCatText = getVal(colCategory).trim();
+          const rawPartyText = getVal(colParty).trim();
+          const rawTitleText = getVal(colTitle).trim();
           let amount = 0;
           let txType = 'expense';
 
-          if (colAmount >= 0 && getVal(colAmount) !== '') {
-            const signedAmt = parseLocalizedAmount(getVal(colAmount));
-            amount = Math.abs(signedAmt);
-            if (/transfer|pindah|mutasi/i.test(rawType) || rawToAcc) {
-              txType = 'transfer';
-            } else if (/masuk|income|kredit|credit|terima|gaji|\+/i.test(rawType) || (signedAmt > 0 && !/keluar|expense|debet|debit|bayar|beli/i.test(rawType) && colType < 0)) {
-              txType = signedAmt < 0 ? 'expense' : colType < 0 && signedAmt > 0 ? 'expense' : 'income';
-            } else {
-              txType = 'expense';
-            }
-          } else if (colIncome >= 0 || colExpense >= 0) {
+          if (colIncome >= 0 || colExpense >= 0) {
             const incVal = Math.abs(parseLocalizedAmount(getVal(colIncome)));
             const expVal = Math.abs(parseLocalizedAmount(getVal(colExpense)));
             if (incVal > 0 && expVal === 0) {
@@ -5559,27 +5575,98 @@
               txType = 'expense';
               amount = expVal;
             }
+          } else if (colAmount >= 0 && getVal(colAmount) !== '') {
+            const signedAmt = parseLocalizedAmount(getVal(colAmount));
+            amount = Math.abs(signedAmt);
+            if (/transfer|pindah|mutasi/i.test(rawType) || rawToAcc) {
+              txType = 'transfer';
+            } else if (
+              /masuk|income|kredit|credit|terima|gaji|\+/i.test(rawType) ||
+              (signedAmt > 0 && !/keluar|expense|debet|debit|bayar|beli/i.test(rawType) && colType < 0)
+            ) {
+              txType = signedAmt < 0 ? 'expense' : colType < 0 && signedAmt > 0 ? 'expense' : 'income';
+            } else {
+              txType = 'expense';
+            }
           }
 
           if (amount <= 0) continue;
 
           if (/transfer|pindah/i.test(rawType) || rawToAcc) {
             txType = 'transfer';
-          } else if (/masuk|income|kredit|credit/i.test(rawType)) {
+          } else if (/masuk|income|kredit|credit/i.test(rawType) && colIncome < 0) {
             txType = 'income';
-          } else if (/keluar|expense|debet|debit/i.test(rawType)) {
+          } else if (/keluar|expense|debet|debit/i.test(rawType) && colExpense < 0) {
             txType = 'expense';
           }
 
           const srcAccObj = getOrCreateAccount(getVal(colAccount));
+          const isoDate = parseFlexibleDate(getVal(colDate), getVal(colTime));
+          const dateOnlyKey = toLocalDateKey(isoDate);
+          const noteRaw = getVal(colNote).trim();
+
+          // Deteksi pasangan baris Transfer dari format aplikasi lama (mis. "Transfer to X" & "Transfer from Y")
+          const isLegacyTransferRow =
+            /^transfer$/i.test(rawCatText) || /^transfer\s+(to|from)\s+/i.test(rawPartyText);
+
+          if (isLegacyTransferRow && !rawToAcc) {
+            const toMatch = rawPartyText.match(/^transfer\s+to\s+(.+)$/i);
+            const fromMatch = rawPartyText.match(/^transfer\s+from\s+(.+)$/i);
+            const direction = txType === 'expense' || toMatch ? 'out' : 'in';
+            const peerName = (toMatch ? toMatch[1] : fromMatch ? fromMatch[1] : '').trim();
+
+            const pairIdx = pendingTransfers.findIndex(
+              (pt) =>
+                !pt.matched &&
+                pt.dateKey === dateOnlyKey &&
+                pt.amount === amount &&
+                pt.direction !== direction &&
+                (!pt.peerName || pt.peerName.toLowerCase() === srcAccObj.name.toLowerCase())
+            );
+
+            if (pairIdx !== -1) {
+              const pair = pendingTransfers[pairIdx];
+              pair.matched = true;
+              const outEntry = direction === 'out' ? { acc: srcAccObj, note: noteRaw } : pair;
+              const inEntry = direction === 'in' ? { acc: srcAccObj, note: noteRaw } : pair;
+
+              parsedTransactions.push({
+                id: `tx-imp-${r}-${Date.now().toString(36)}`,
+                title: `Transfer ke ${inEntry.acc.name}`,
+                party: inEntry.acc.name,
+                amount,
+                type: 'transfer',
+                category: '',
+                accountId: outEntry.acc.id,
+                toAccountId: inEntry.acc.id,
+                date: isoDate,
+                note: outEntry.note || inEntry.note || '',
+                receiptImage: ''
+              });
+            } else {
+              pendingTransfers.push({
+                matched: false,
+                direction,
+                acc: srcAccObj,
+                peerName,
+                dateKey: dateOnlyKey,
+                isoDate,
+                amount,
+                note: noteRaw,
+                rowIdx: r
+              });
+            }
+            continue;
+          }
+
           let dstAccId = '';
           if (txType === 'transfer') {
             const dstAccObj = getOrCreateAccount(rawToAcc || 'Tabungan');
             dstAccId = dstAccObj.id;
           }
 
-          let rawCat = getVal(colCategory);
-          let rawSubCat = getVal(colSubCategory);
+          let rawCat = rawCatText;
+          let rawSubCat = getVal(colSubCategory).trim();
           if (!rawSubCat && /[>›\/]/.test(rawCat)) {
             const splitParts = rawCat.split(/[>›\/]/).map((s) => s.trim()).filter(Boolean);
             if (splitParts.length >= 2) {
@@ -5589,23 +5676,67 @@
           }
 
           const categoryId = txType === 'transfer' ? '' : getOrCreateCategory(rawCat, rawSubCat, txType);
-          const titleRaw = getVal(colTitle).trim();
-          const partyRaw = getVal(colParty).trim();
-          const noteRaw = getVal(colNote).trim();
           const fallbackCatName = rawSubCat || rawCat || (txType === 'transfer' ? 'Transfer' : 'Transaksi');
 
           parsedTransactions.push({
             id: `tx-imp-${r}-${Date.now().toString(36)}`,
-            title: titleRaw || partyRaw || fallbackCatName,
-            party: partyRaw,
+            title: rawTitleText || rawPartyText || fallbackCatName,
+            party: rawPartyText,
             amount,
             type: txType,
             category: categoryId,
             accountId: srcAccObj.id,
             toAccountId: dstAccId,
-            date: parseFlexibleDate(getVal(colDate), getVal(colTime)),
+            date: isoDate,
             note: noteRaw,
             receiptImage: ''
+          });
+        }
+
+        // Proses sisa baris transfer yang belum memiliki pasangan
+        pendingTransfers
+          .filter((pt) => !pt.matched)
+          .forEach((pt) => {
+            const peerAcc = getOrCreateAccount(pt.peerName || 'Tabungan');
+            const outAcc = pt.direction === 'out' ? pt.acc : peerAcc;
+            const inAcc = pt.direction === 'in' ? pt.acc : peerAcc;
+            parsedTransactions.push({
+              id: `tx-imp-trf-${pt.rowIdx}-${Date.now().toString(36)}`,
+              title: `Transfer ke ${inAcc.name}`,
+              party: inAcc.name,
+              amount: pt.amount,
+              type: 'transfer',
+              category: '',
+              accountId: outAcc.id,
+              toAccountId: inAcc.id,
+              date: pt.isoDate,
+              note: pt.note || '',
+              receiptImage: ''
+            });
+          });
+
+        // Kalibrasi saldo awal rekening jika ringkasan saldo akhir ditemukan di bagian atas file CSV
+        if (detectedBalancesMap.size > 0) {
+          const netByAccId = {};
+          parsedTransactions.forEach((tx) => {
+            if (tx.type === 'income') {
+              netByAccId[tx.accountId] = (netByAccId[tx.accountId] || 0) + tx.amount;
+            } else if (tx.type === 'expense') {
+              netByAccId[tx.accountId] = (netByAccId[tx.accountId] || 0) - tx.amount;
+            } else if (tx.type === 'transfer') {
+              netByAccId[tx.accountId] = (netByAccId[tx.accountId] || 0) - tx.amount;
+              if (tx.toAccountId) {
+                netByAccId[tx.toAccountId] = (netByAccId[tx.toAccountId] || 0) + tx.amount;
+              }
+            }
+          });
+
+          accountMap.forEach((accObj, key) => {
+            if (detectedBalancesMap.has(key)) {
+              const targetFinalBal = detectedBalancesMap.get(key);
+              const netFlow = netByAccId[accObj.id] || 0;
+              accObj.initialBalance = targetFinalBal - netFlow;
+            }
           });
         }
 
