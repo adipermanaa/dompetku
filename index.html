@@ -5426,18 +5426,30 @@
 
       function buildCsvImportPreview(csvText, filename) {
         const cleanText = String(csvText || '').replace(/^\uFEFF/, '');
-        const firstLine = (cleanText.split(/\r?\n/)[0] || '');
-        const semiCount = (firstLine.match(/;/g) || []).length;
-        const commaCount = (firstLine.match(/,/g) || []).length;
-        const tabCount = (firstLine.match(/\t/g) || []).length;
-        const delimiter = tabCount > commaCount && tabCount > semiCount ? '\t' : semiCount > commaCount ? ';' : ',';
+        const sampleLines = cleanText.split(/\r?\n/).slice(0, 6).join('\n');
+        const semiCount = (sampleLines.match(/;/g) || []).length;
+        const commaCount = (sampleLines.match(/,/g) || []).length;
+        const tabCount = (sampleLines.match(/\t/g) || []).length;
+        const delimiter = tabCount > commaCount && tabCount > semiCount ? '\t' : semiCount >= commaCount ? ';' : ',';
 
         const rows = parseCsvRows(cleanText, delimiter);
         if (rows.length < 2) {
           throw new Error('File CSV kosong atau tidak memiliki baris data');
         }
 
-        const headers = rows[0].map((h) => h.toLowerCase().trim());
+        // Cari baris header tabel secara otomatis (melewati baris judul laporan di baris ke-1 jika ada)
+        let headerRowIdx = 0;
+        const headerKeywords = ['tanggal', 'date', 'jenis', 'judul', 'kategori', 'nominal', 'jumlah', 'pemasukan', 'pengeluaran', 'rekening'];
+        for (let idx = 0; idx < Math.min(rows.length, 6); idx++) {
+          const joinedRow = rows[idx].map((c) => c.toLowerCase().trim()).join('|');
+          const matchCount = headerKeywords.filter((kw) => joinedRow.includes(kw)).length;
+          if (rows[idx].length >= 3 && matchCount >= 2) {
+            headerRowIdx = idx;
+            break;
+          }
+        }
+
+        const headers = rows[headerRowIdx].map((h) => h.toLowerCase().trim());
         const findCol = (patterns) =>
           headers.findIndex((h) => patterns.some((p) => (p instanceof RegExp ? p.test(h) : h === p || h.includes(p))));
 
@@ -5518,7 +5530,7 @@
 
         const parsedTransactions = [];
 
-        for (let r = 1; r < rows.length; r++) {
+        for (let r = headerRowIdx + 1; r < rows.length; r++) {
           const row = rows[r];
           const getVal = (idx) => (idx >= 0 && idx < row.length ? row[idx] : '');
 
