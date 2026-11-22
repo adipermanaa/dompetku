@@ -203,13 +203,13 @@
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
             </svg>
-            <input id="search-input" type="search" placeholder="Cari transaksi hari ini (judul, pihak, sub kategori)..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl text-sm bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition" />
+            <input id="search-input" type="search" placeholder="Cari transaksi (judul, pihak, kategori, catatan)..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl text-sm bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition" />
           </div>
 
-          <!-- Header Transaksi Hari Ini & Pintasan Menuju Semua Riwayat -->
+          <!-- Header Riwayat Transaksi Terbaru & Pintasan Menuju Semua Riwayat -->
           <div class="flex items-center justify-between px-1">
             <div>
-              <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Transaksi Hari Ini</span>
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Riwayat Transaksi Terbaru</span>
               <span id="dashboard-today-label" class="text-[11px] text-slate-400 ml-1.5"></span>
             </div>
             <button id="btn-goto-summary" type="button" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
@@ -832,18 +832,17 @@
       </div>
 
       <!-- Header Modal -->
-      <div class="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <button id="btn-close-tx-modal" type="button" class="text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 py-1 px-2">
-          Batal
-        </button>
+      <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center relative">
         <h3 id="tx-modal-title" class="text-base font-bold text-slate-900 dark:text-white">Catat Transaksi</h3>
-        <button id="btn-save-tx" type="button" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 py-1 px-2">
-          Simpan
+        <button id="btn-close-tx-modal-top" type="button" aria-label="Tutup" class="absolute right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
       <!-- Isi Formulir -->
-      <form id="tx-form" class="p-5 overflow-y-auto space-y-5" style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
+      <form id="tx-form" class="p-5 overflow-y-auto space-y-5 flex-1">
         <input type="hidden" id="tx-id" value="" />
 
         <!-- Pemilih Jenis Transaksi (Pengeluaran / Pemasukan / Transfer) -->
@@ -990,92 +989,105 @@
         </div>
 
         <!-- Tombol Hapus (Muncul hanya saat mode Edit) -->
-        <div id="tx-delete-wrapper" class="hidden pt-2">
+        <div id="tx-delete-wrapper" class="hidden pt-1">
           <button id="btn-delete-tx" type="button" class="w-full py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 text-sm font-bold transition">
             Hapus Transaksi Ini
           </button>
         </div>
       </form>
+
+      <!-- Bilah Tombol Batal & Simpan di Bagian Bawah (Mudah Dijangkau & Jelas Terlihat) -->
+      <div class="px-5 pt-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 grid grid-cols-2 gap-3 shrink-0" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+        <button id="btn-close-tx-modal" type="button" class="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm transition active:scale-[0.99]">
+          Batal
+        </button>
+        <button id="btn-save-tx" type="button" class="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/25 transition active:scale-[0.99]">
+          Simpan Transaksi
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- ========================================================= -->
-  <!-- MODAL 2: TAMBAH / EDIT ANGGARAN BULANAN                   -->
+  <!-- MODAL 2: FORM TAMBAH / EDIT ANGGARAN BULANAN              -->
   <!-- ========================================================= -->
   <div id="modal-budget" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-xs p-0 sm:p-4">
-    <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/60 dark:border-slate-800 p-5 space-y-4 max-h-[90vh] overflow-y-auto" style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
-      <div class="flex items-center justify-between">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/60 dark:border-slate-800 max-h-[92vh] flex flex-col overflow-hidden">
+      <div class="pt-2.5 pb-1 flex justify-center sm:hidden">
+        <div class="w-10 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+      </div>
+
+      <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <button id="btn-close-budget" type="button" class="text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 py-1 px-2">
+          Batal
+        </button>
         <h3 id="budget-modal-title" class="text-base font-bold text-slate-900 dark:text-white">Tambah Anggaran Baru</h3>
-        <button id="btn-close-budget" type="button" class="text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400">Tutup</button>
+        <button id="btn-save-budget" type="button" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 py-1 px-2">
+          Simpan
+        </button>
       </div>
 
-      <input type="hidden" id="budget-id" value="" />
+      <div class="p-5 overflow-y-auto space-y-4" style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
+        <input type="hidden" id="budget-id" value="" />
 
-      <div>
-        <label for="input-budget-name" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Nama Anggaran</label>
-        <input id="input-budget-name" type="text" placeholder="Contoh: Anggaran Makan & Kopi, Belanja Bulanan" class="w-full px-4 py-3 rounded-2xl text-sm bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      </div>
-
-      <!-- Pemilih Multiple Kategori Target Anggaran -->
-      <div class="space-y-2">
-        <div class="flex items-center justify-between">
-          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">Kategori Target (Bisa Pilih Banyak)</label>
-          <span id="budget-cat-count-label" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">Semua Pengeluaran</span>
+        <div>
+          <label for="input-budget-name" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Nama Anggaran</label>
+          <input id="input-budget-name" type="text" placeholder="Contoh: Makan & Kopi, Belanja Bulanan" class="w-full px-4 py-3 rounded-2xl text-sm bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
-        <div id="budget-category-chips" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-          <!-- Chip kategori target anggaran dirender dinamis -->
-        </div>
-      </div>
 
-      <div>
-        <label for="input-budget-period" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Periode Anggaran</label>
-        <select id="input-budget-period" class="w-full px-3.5 py-3 rounded-2xl text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <!-- Diisi dinamis -->
-        </select>
-      </div>
-
-      <!-- Saklar Budget Rollover (Akumulasi Sisa Anggaran ke Bulan Depan) -->
-      <div id="budget-rollover-box" class="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/35 border border-indigo-200/70 dark:border-indigo-900/60 space-y-2.5">
-        <label for="input-budget-rollover" class="flex items-start gap-2.5 cursor-pointer select-none">
-          <input id="input-budget-rollover" type="checkbox" checked class="mt-0.5 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 shrink-0" />
-          <div>
-            <span class="block text-xs font-bold text-slate-900 dark:text-white">Bawa Sisa Anggaran ke Bulan Depan (Rollover)</span>
-            <span class="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Sisa anggaran yang tidak terpakai bulan ini otomatis ditambahkan ke batas anggaran bulan depan agar tidak minus.
-            </span>
+        <div class="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
+          <label for="input-budget-amount" class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Batas Nominal (Rupiah)</label>
+          <div class="flex items-center gap-2">
+            <span class="text-xl font-extrabold text-slate-400">Rp</span>
+            <input id="input-budget-amount" type="text" inputmode="numeric" placeholder="0" class="w-full bg-transparent text-2xl font-extrabold text-slate-900 dark:text-white focus:outline-none" />
           </div>
-        </label>
+          <div class="flex gap-1.5 overflow-x-auto pb-1">
+            <button type="button" data-budget-add="250000" class="budget-quick-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-100/80 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0 active:scale-95 transition">+250rb</button>
+            <button type="button" data-budget-add="500000" class="budget-quick-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-100/80 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0 active:scale-95 transition">+500rb</button>
+            <button type="button" data-budget-add="1000000" class="budget-quick-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-100/80 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0 active:scale-95 transition">+1jt</button>
+            <button type="button" data-budget-add="2500000" class="budget-quick-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-100/80 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0 active:scale-95 transition">+2,5jt</button>
+          </div>
+        </div>
 
-        <div id="budget-start-month-wrapper" class="pt-1 border-t border-indigo-200/60 dark:border-indigo-900/50">
-          <label for="input-budget-start-month" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Mulai Akumulasi Rollover Dari</label>
-          <select id="input-budget-start-month" class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">Kategori Pengeluaran</label>
+            <span id="budget-cat-count-label" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">Semua Pengeluaran</span>
+          </div>
+          <div id="budget-category-chips" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
+            <!-- Dirender dinamis oleh JavaScript -->
+          </div>
+        </div>
+
+        <div>
+          <label for="input-budget-period" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Periode Anggaran</label>
+          <select id="input-budget-period" class="w-full px-4 py-3 rounded-2xl text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <!-- Diisi dinamis -->
           </select>
         </div>
-      </div>
 
-      <div class="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 space-y-2.5">
-        <label for="input-budget-amount" class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Batas Nominal (Rupiah)</label>
-        <div class="flex items-center gap-2">
-          <span class="text-xl font-bold text-slate-400">Rp</span>
-          <input id="input-budget-amount" type="text" inputmode="numeric" placeholder="0" class="w-full bg-transparent text-2xl font-extrabold text-slate-900 dark:text-white focus:outline-none" />
+        <div id="budget-rollover-box" class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-3">
+          <label for="input-budget-rollover" class="flex items-center justify-between gap-3 cursor-pointer select-none">
+            <div>
+              <span class="block text-xs font-bold text-slate-800 dark:text-slate-100">Aktifkan Budget Rollover</span>
+              <span class="block text-[11px] text-slate-400 mt-0.5">Sisa anggaran bulan sebelumnya otomatis menambah jatah bulan berikutnya</span>
+            </div>
+            <input id="input-budget-rollover" type="checkbox" checked class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 shrink-0" />
+          </label>
+
+          <div id="budget-start-month-wrapper" class="pt-2 border-t border-slate-200/70 dark:border-slate-800">
+            <label for="input-budget-start-month" class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Mulai Akumulasi Rollover Sejak</label>
+            <select id="input-budget-start-month" class="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <!-- Diisi dinamis -->
+            </select>
+          </div>
         </div>
-        <div class="flex gap-1.5 overflow-x-auto pt-1">
-          <button type="button" data-budget-add="500000" class="budget-quick-btn px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-100/80 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0">+500rb</button>
-          <button type="button" data-budget-add="1000000" class="budget-quick-btn px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-100/80 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0">+1jt</button>
-          <button type="button" data-budget-add="2500000" class="budget-quick-btn px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-100/80 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0">+2,5jt</button>
-          <button type="button" data-budget-add="5000000" class="budget-quick-btn px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-100/80 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0">+5jt</button>
+
+        <div id="budget-delete-wrapper" class="hidden pt-1">
+          <button id="btn-delete-budget" type="button" class="w-full py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 text-sm font-bold transition">
+            Hapus Anggaran Ini
+          </button>
         </div>
-      </div>
-
-      <button id="btn-save-budget" type="button" class="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md transition">
-        Simpan Anggaran
-      </button>
-
-      <div id="budget-delete-wrapper" class="hidden">
-        <button id="btn-delete-budget" type="button" class="w-full py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 text-xs font-bold transition">
-          Hapus Anggaran Ini
-        </button>
       </div>
     </div>
   </div>
@@ -2909,14 +2921,13 @@
         if (!container) return;
 
         const todayKey = toLocalDateKey(new Date());
-        if (todayLabelEl) {
-          todayLabelEl.textContent = `(${todayKey})`;
-        }
+        const yesterdayDate = new Date();
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterdayKey = toLocalDateKey(yesterdayDate);
 
         const q = (state.searchQuery || '').trim().toLowerCase();
-        const todayTxs = state.transactions
+        const matchingTxs = state.transactions
           .filter((tx) => {
-            if (toLocalDateKey(tx.date) !== todayKey) return false;
             if (state.filterType !== 'all' && tx.type !== state.filterType) return false;
             if (state.filterAccountId !== 'all') {
               const matchSrc = tx.accountId === state.filterAccountId;
@@ -2936,75 +2947,100 @@
           })
           .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        if (todayTxs.length === 0) {
+        const recentTxs = matchingTxs.slice(0, 25);
+        if (todayLabelEl) {
+          todayLabelEl.textContent = matchingTxs.length > 0 ? `(${recentTxs.length} dari ${matchingTxs.length})` : '';
+        }
+
+        if (recentTxs.length === 0) {
           container.innerHTML = `
             <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/70 dark:border-slate-800 text-center space-y-2">
-              <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Belum ada transaksi hari ini</p>
-              <p class="text-xs text-slate-400">Ketuk tombol <strong>+ Catat</strong> untuk menambah transaksi baru, atau ketuk <strong>Semua Riwayat</strong> untuk melihat tanggal sebelumnya.</p>
+              <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Belum ada transaksi ditemukan</p>
+              <p class="text-xs text-slate-400">Ketuk tombol <strong>+ Catat</strong> untuk menambah transaksi baru, atau impor file CSV Anda di tab <strong>Lainnya</strong>.</p>
             </div>
           `;
           return;
         }
 
-        const rowsHtml = todayTxs
-          .map((tx) => {
-            const isTransfer = tx.type === 'transfer';
-            const isExpense = tx.type === 'expense';
-            const cat = isTransfer
-              ? {
-                  name: 'Transfer',
-                  fullName: 'Transfer',
-                  bgClass: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400',
-                  svg: '<path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />'
-                }
-              : getCategoryMeta(tx.category);
+        const groupsMap = new Map();
+        recentTxs.forEach((tx) => {
+          const dKey = toLocalDateKey(tx.date) || 'Tanpa Tanggal';
+          if (!groupsMap.has(dKey)) groupsMap.set(dKey, []);
+          groupsMap.get(dKey).push(tx);
+        });
 
-            const srcAcc = getAccountMeta(tx.accountId).name;
-            const dstAcc = tx.toAccountId ? getAccountMeta(tx.toAccountId).name : '';
-            const accSubtitle = isTransfer ? `${srcAcc} → ${dstAcc}` : srcAcc;
-            const partyTag = tx.party ? ` • ${escapeHtml(tx.party)}` : '';
-            const titleText = tx.title || (isTransfer ? `Transfer ke ${dstAcc}` : cat.name);
-            const amountColor = isTransfer
-              ? 'text-blue-600 dark:text-blue-400'
-              : isExpense
-              ? 'text-rose-600 dark:text-rose-400'
-              : 'text-emerald-600 dark:text-emerald-400';
-            const sign = isTransfer ? '' : isExpense ? '-' : '+';
-            const receiptBadge = tx.receiptImage
-              ? `<span data-view-receipt-tx="${escapeHtml(tx.id)}" class="view-receipt-badge inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300 text-[10px] font-bold ml-1.5 align-middle">
-                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><circle cx="12" cy="13" r="3" /></svg>
-                  <span>Nota</span>
-                </span>`
-              : '';
+        const groupsHtml = Array.from(groupsMap.entries())
+          .map(([dKey, items]) => {
+            let groupTitle = dKey;
+            if (dKey === todayKey) groupTitle = `Hari Ini (${dKey})`;
+            else if (dKey === yesterdayKey) groupTitle = `Kemarin (${dKey})`;
+
+            const rowsHtml = items
+              .map((tx) => {
+                const isTransfer = tx.type === 'transfer';
+                const isExpense = tx.type === 'expense';
+                const cat = isTransfer
+                  ? {
+                      name: 'Transfer',
+                      fullName: 'Transfer',
+                      bgClass: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400',
+                      svg: '<path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />'
+                    }
+                  : getCategoryMeta(tx.category);
+
+                const srcAcc = getAccountMeta(tx.accountId).name;
+                const dstAcc = tx.toAccountId ? getAccountMeta(tx.toAccountId).name : '';
+                const accSubtitle = isTransfer ? `${srcAcc} → ${dstAcc}` : srcAcc;
+                const partyTag = tx.party ? ` • ${escapeHtml(tx.party)}` : '';
+                const titleText = tx.title || (isTransfer ? `Transfer ke ${dstAcc}` : cat.name);
+                const amountColor = isTransfer
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : isExpense
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : 'text-emerald-600 dark:text-emerald-400';
+                const sign = isTransfer ? '' : isExpense ? '-' : '+';
+                const receiptBadge = tx.receiptImage
+                  ? `<span data-view-receipt-tx="${escapeHtml(tx.id)}" class="view-receipt-badge inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300 text-[10px] font-bold ml-1.5 align-middle">
+                      <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><circle cx="12" cy="13" r="3" /></svg>
+                      <span>Nota</span>
+                    </span>`
+                  : '';
+
+                return `
+                  <button type="button" data-edit-tx="${escapeHtml(tx.id)}" class="tx-item-row w-full px-4 py-3.5 flex items-center gap-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition active:bg-slate-100">
+                    <div class="w-10 h-10 rounded-2xl ${cat.bgClass} flex items-center justify-center shrink-0 overflow-hidden">
+                      ${renderCategoryIconInner(cat, 'w-5 h-5')}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center">
+                        <p class="text-sm font-bold text-slate-900 dark:text-white truncate">${escapeHtml(titleText)}</p>
+                        ${receiptBadge}
+                      </div>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        ${escapeHtml(cat.fullName)} • ${escapeHtml(accSubtitle)}${partyTag}
+                      </p>
+                    </div>
+                    <div class="text-right shrink-0">
+                      <p class="text-sm font-extrabold ${amountColor}">${sign}${formatRupiah(tx.amount)}</p>
+                      <p class="text-[10px] text-slate-400 mt-0.5">${formatTime(tx.date)}</p>
+                    </div>
+                  </button>
+                `;
+              })
+              .join('');
 
             return `
-              <button type="button" data-edit-tx="${escapeHtml(tx.id)}" class="tx-item-row w-full px-4 py-3.5 flex items-center gap-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition active:bg-slate-100">
-                <div class="w-10 h-10 rounded-2xl ${cat.bgClass} flex items-center justify-center shrink-0 overflow-hidden">
-                  ${renderCategoryIconInner(cat, 'w-5 h-5')}
+              <div class="space-y-1.5">
+                <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 px-1">${escapeHtml(groupTitle)}</p>
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/70 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-2xs">
+                  ${rowsHtml}
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center">
-                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">${escapeHtml(titleText)}</p>
-                    ${receiptBadge}
-                  </div>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    ${escapeHtml(cat.fullName)} • ${escapeHtml(accSubtitle)}${partyTag}
-                  </p>
-                </div>
-                <div class="text-right shrink-0">
-                  <p class="text-sm font-extrabold ${amountColor}">${sign}${formatRupiah(tx.amount)}</p>
-                  <p class="text-[10px] text-slate-400 mt-0.5">${formatTime(tx.date)}</p>
-                </div>
-              </button>
+              </div>
             `;
           })
           .join('');
 
-        container.innerHTML = `
-          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/70 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-2xs">
-            ${rowsHtml}
-          </div>
-        `;
+        container.innerHTML = groupsHtml;
 
         container.querySelectorAll('.view-receipt-badge').forEach((badge) => {
           badge.addEventListener('click', (e) => {
@@ -5314,9 +5350,10 @@
         const cleanTime = String(timeRaw || '').trim().replace(/^["']|["']$/g, '');
         if (!cleanDate) return new Date().toISOString();
 
-        // Hapus nama hari di awal string jika ada (mis. "Senin, 15/11/2026" atau "Mon, 15 Nov 2026")
+        // Hapus nama hari di awal/akhir string jika ada (mis. "Senin, 15/11/2026" atau "15 Nov 2026 (Min)")
         cleanDate = cleanDate
           .replace(/^(senin|selasa|rabu|kamis|jumat|jum'at|sabtu|minggu|monday|tuesday|wednesday|thursday|friday|saturday|sunday|sen|sel|rab|kam|jum|sab|min|mon|tue|wed|thu|fri|sat|sun)[,\s]+/i, '')
+          .replace(/\s*\([a-zA-Z]+\)\s*$/i, '')
           .trim();
 
         const monthMap = {
@@ -5354,7 +5391,16 @@
 
         // Ambil bagian tanggal sebelum spasi waktu atau pemisah 'T' (ISO)
         const dateOnly = cleanDate.split(/[T\s]+/)[0];
-        if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(dateOnly)) {
+        const ymdTextMatch = cleanDate.match(/^(\d{4})[\s\-/.]+([a-zA-Z]+)[\s\-/.]+(\d{1,2})/);
+        const dmyTextMatch = cleanDate.match(/(\d{1,2})[\s\-/.,]+([a-zA-Z]+)[\s\-/.,]+(\d{2,4})/);
+        const mdyTextMatch = cleanDate.match(/([a-zA-Z]+)[\s\-/.,]+(\d{1,2})[\s\-/.,]+(\d{2,4})/);
+
+        if (/^\d{8}$/.test(dateOnly)) {
+          // Format rapat YYYYMMDD (mis. 20261115)
+          year = parseInt(dateOnly.slice(0, 4), 10);
+          month = parseInt(dateOnly.slice(4, 6), 10) - 1;
+          day = parseInt(dateOnly.slice(6, 8), 10);
+        } else if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(dateOnly)) {
           const parts = dateOnly.split(/[-/.]/);
           year = parseInt(parts[0], 10);
           month = parseInt(parts[1], 10) - 1;
@@ -5373,24 +5419,24 @@
             day = p0;
             month = p1 - 1;
           }
+        } else if (ymdTextMatch && monthMap[ymdTextMatch[2].toLowerCase()] !== undefined) {
+          year = parseInt(ymdTextMatch[1], 10);
+          month = monthMap[ymdTextMatch[2].toLowerCase()];
+          day = parseInt(ymdTextMatch[3], 10);
+        } else if (dmyTextMatch && monthMap[dmyTextMatch[2].toLowerCase()] !== undefined) {
+          day = parseInt(dmyTextMatch[1], 10);
+          month = monthMap[dmyTextMatch[2].toLowerCase()];
+          year = parseInt(dmyTextMatch[3], 10);
+          if (year < 100) year += 2000;
+        } else if (mdyTextMatch && monthMap[mdyTextMatch[1].toLowerCase()] !== undefined) {
+          month = monthMap[mdyTextMatch[1].toLowerCase()];
+          day = parseInt(mdyTextMatch[2], 10);
+          year = parseInt(mdyTextMatch[3], 10);
+          if (year < 100) year += 2000;
         } else {
-          const dmyTextMatch = cleanDate.match(/(\d{1,2})[\s\-/]+([a-zA-Z]+)[\s\-/,]+(\d{2,4})/);
-          const mdyTextMatch = cleanDate.match(/([a-zA-Z]+)[\s\-/]+(\d{1,2})[\s\-/,]+(\d{2,4})/);
-          if (dmyTextMatch && monthMap[dmyTextMatch[2].toLowerCase()] !== undefined) {
-            day = parseInt(dmyTextMatch[1], 10);
-            month = monthMap[dmyTextMatch[2].toLowerCase()];
-            year = parseInt(dmyTextMatch[3], 10);
-            if (year < 100) year += 2000;
-          } else if (mdyTextMatch && monthMap[mdyTextMatch[1].toLowerCase()] !== undefined) {
-            month = monthMap[mdyTextMatch[1].toLowerCase()];
-            day = parseInt(mdyTextMatch[2], 10);
-            year = parseInt(mdyTextMatch[3], 10);
-            if (year < 100) year += 2000;
-          } else {
-            const fallback = new Date(combined);
-            if (!Number.isNaN(fallback.getTime())) return fallback.toISOString();
-            return new Date().toISOString();
-          }
+          const fallback = new Date(combined);
+          if (!Number.isNaN(fallback.getTime())) return fallback.toISOString();
+          return new Date().toISOString();
         }
 
         const constructed = new Date(year, month, day, hour, minute, second);
@@ -5473,8 +5519,35 @@
         const findCol = (patterns) =>
           headers.findIndex((h) => patterns.some((p) => (p instanceof RegExp ? p.test(h) : h === p || h.includes(p))));
 
-        const colDate = findCol(['tanggal', 'date', 'waktu', 'tgl', 'created', 'timestamp', 'hari']);
+        let colDate = findCol([
+          'tanggal',
+          'date',
+          'waktu',
+          'tgl',
+          'created',
+          'timestamp',
+          'hari',
+          'periode',
+          'dt',
+          'time'
+        ]);
         const colTime = findCol(['jam', 'time', 'pukul']);
+        if (colDate === colTime && colDate !== -1) {
+          // Pastikan jika hanya ada satu kolom "Time" / "Date", kolom tersebut dipakai sebagai colDate
+        }
+        // Fallback: jika header tanggal tidak dikenali namanya, cari otomatis kolom yang isinya berpola tanggal di baris data pertama
+        if (colDate === -1 && rows[headerRowIdx + 1]) {
+          const sampleDataRow = rows[headerRowIdx + 1];
+          const detectedDateIdx = sampleDataRow.findIndex((cell) => {
+            const v = String(cell || '').trim();
+            return (
+              /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(v) ||
+              /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(v) ||
+              /\d{1,2}[\s\-/.,]+(?:jan|feb|mar|apr|mei|may|jun|jul|agu|ags|aug|sep|okt|oct|nov|des|dec)[a-z]*[\s\-/.,]+\d{2,4}/i.test(v)
+            );
+          });
+          if (detectedDateIdx !== -1) colDate = detectedDateIdx;
+        }
         const colType = findCol(['jenis', 'tipe', 'type', 'arus', 'mutasi', 'dk', 'd/k', 'status', 'arah']);
         const colTitle = findCol(['judul', 'title', 'deskripsi', 'description', 'uraian', 'transaksi', 'nama transaksi', 'item']);
         const colParty = findCol(['dari/kepada', 'dari', 'kepada', 'pihak', 'payee', 'merchant', 'penerima', 'pengirim', 'toko']);
@@ -6463,6 +6536,7 @@
 
         // Modal Transaksi
         document.getElementById('btn-close-tx-modal').addEventListener('click', closeTransactionModal);
+        document.getElementById('btn-close-tx-modal-top').addEventListener('click', closeTransactionModal);
         document.getElementById('btn-save-tx').addEventListener('click', handleSaveTransaction);
 
         document.getElementById('btn-delete-tx').addEventListener('click', () => {
@@ -6608,44 +6682,57 @@
 
         // Modal Tambah / Edit Anggaran Bulanan
         const budgetInput = document.getElementById('input-budget-amount');
+        const btnAddBudget = document.getElementById('btn-add-budget');
+        const btnCloseBudget = document.getElementById('btn-close-budget');
+        const inputBudgetPeriod = document.getElementById('input-budget-period');
+        const inputBudgetRollover = document.getElementById('input-budget-rollover');
+        const btnSaveBudget = document.getElementById('btn-save-budget');
+        const btnDeleteBudget = document.getElementById('btn-delete-budget');
 
-        document.getElementById('btn-add-budget').addEventListener('click', () => {
-          openBudgetModal('');
-        });
+        if (btnAddBudget) {
+          btnAddBudget.addEventListener('click', () => {
+            openBudgetModal('');
+          });
+        }
 
-        document.getElementById('btn-close-budget').addEventListener('click', closeBudgetModal);
-        document.getElementById('input-budget-period').addEventListener('change', updateBudgetRolloverControlsVisibility);
-        document.getElementById('input-budget-rollover').addEventListener('change', updateBudgetRolloverControlsVisibility);
+        if (btnCloseBudget) btnCloseBudget.addEventListener('click', closeBudgetModal);
+        if (inputBudgetPeriod) inputBudgetPeriod.addEventListener('change', updateBudgetRolloverControlsVisibility);
+        if (inputBudgetRollover) inputBudgetRollover.addEventListener('change', updateBudgetRolloverControlsVisibility);
 
-        budgetInput.addEventListener('input', (e) => {
-          e.target.value = formatNumberDots(e.target.value);
-        });
+        if (budgetInput) {
+          budgetInput.addEventListener('input', (e) => {
+            e.target.value = formatNumberDots(e.target.value);
+          });
+        }
 
         document.querySelectorAll('.budget-quick-btn').forEach((btn) => {
           btn.addEventListener('click', () => {
+            if (!budgetInput) return;
             const addVal = Number(btn.getAttribute('data-budget-add')) || 0;
             const current = parseDigits(budgetInput.value);
             budgetInput.value = formatNumberDots(current + addVal);
           });
         });
 
-        document.getElementById('btn-save-budget').addEventListener('click', handleSaveBudget);
+        if (btnSaveBudget) btnSaveBudget.addEventListener('click', handleSaveBudget);
 
-        document.getElementById('btn-delete-budget').addEventListener('click', () => {
-          const id = document.getElementById('budget-id').value;
-          if (!id) return;
-          openConfirmDialog(
-            'Hapus Anggaran?',
-            'Anggaran ini akan dihapus dari daftar pemantauan bulanan Anda.',
-            () => {
-              state.budgets = state.budgets.filter((b) => b.id !== id);
-              saveBudgets();
-              renderAll();
-              closeBudgetModal();
-              showToast('Anggaran dihapus');
-            }
-          );
-        });
+        if (btnDeleteBudget) {
+          btnDeleteBudget.addEventListener('click', () => {
+            const id = document.getElementById('budget-id').value;
+            if (!id) return;
+            openConfirmDialog(
+              'Hapus Anggaran?',
+              'Anggaran ini akan dihapus dari daftar pemantauan bulanan Anda.',
+              () => {
+                state.budgets = state.budgets.filter((b) => b.id !== id);
+                saveBudgets();
+                renderAll();
+                closeBudgetModal();
+                showToast('Anggaran dihapus');
+              }
+            );
+          });
+        }
 
         // Modal Panduan Instalasi iPhone
         const installModal = document.getElementById('modal-install');
