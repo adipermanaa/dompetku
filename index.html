@@ -5310,9 +5310,14 @@
       }
 
       function parseFlexibleDate(dateRaw, timeRaw = '') {
-        const cleanDate = String(dateRaw || '').trim();
-        const cleanTime = String(timeRaw || '').trim();
+        let cleanDate = String(dateRaw || '').trim().replace(/^["']|["']$/g, '');
+        const cleanTime = String(timeRaw || '').trim().replace(/^["']|["']$/g, '');
         if (!cleanDate) return new Date().toISOString();
+
+        // Hapus nama hari di awal string jika ada (mis. "Senin, 15/11/2026" atau "Mon, 15 Nov 2026")
+        cleanDate = cleanDate
+          .replace(/^(senin|selasa|rabu|kamis|jumat|jum'at|sabtu|minggu|monday|tuesday|wednesday|thursday|friday|saturday|sunday|sen|sel|rab|kam|jum|sab|min|mon|tue|wed|thu|fri|sat|sun)[,\s]+/i, '')
+          .trim();
 
         const monthMap = {
           jan: 0, januari: 0, january: 0,
@@ -5334,17 +5339,23 @@
         let day = 1;
         let hour = 12;
         let minute = 0;
+        let second = 0;
 
         const combined = `${cleanDate} ${cleanTime}`;
-        const timeMatch = combined.match(/(\d{1,2})[:.](\d{2})/);
+        const timeMatch = combined.match(/(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?(?:\s*(am|pm))?/i);
         if (timeMatch) {
           hour = Math.min(23, parseInt(timeMatch[1], 10));
           minute = Math.min(59, parseInt(timeMatch[2], 10));
+          second = timeMatch[3] ? Math.min(59, parseInt(timeMatch[3], 10)) : 0;
+          const ampm = (timeMatch[4] || '').toLowerCase();
+          if (ampm === 'pm' && hour < 12) hour += 12;
+          if (ampm === 'am' && hour === 12) hour = 0;
         }
 
-        const dateOnly = cleanDate.split(/\s+/)[0];
-        if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(dateOnly)) {
-          const parts = dateOnly.split(/[-/]/);
+        // Ambil bagian tanggal sebelum spasi waktu atau pemisah 'T' (ISO)
+        const dateOnly = cleanDate.split(/[T\s]+/)[0];
+        if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(dateOnly)) {
+          const parts = dateOnly.split(/[-/.]/);
           year = parseInt(parts[0], 10);
           month = parseInt(parts[1], 10) - 1;
           day = parseInt(parts[2], 10);
@@ -5363,12 +5374,17 @@
             month = p1 - 1;
           }
         } else {
-          const textMatch = cleanDate.match(/(\d{1,2})\s+([a-zA-Z]+)\s+(\d{2,4})/);
-          if (textMatch) {
-            day = parseInt(textMatch[1], 10);
-            const mKey = textMatch[2].toLowerCase();
-            month = monthMap[mKey] !== undefined ? monthMap[mKey] : 0;
-            year = parseInt(textMatch[3], 10);
+          const dmyTextMatch = cleanDate.match(/(\d{1,2})[\s\-/]+([a-zA-Z]+)[\s\-/,]+(\d{2,4})/);
+          const mdyTextMatch = cleanDate.match(/([a-zA-Z]+)[\s\-/]+(\d{1,2})[\s\-/,]+(\d{2,4})/);
+          if (dmyTextMatch && monthMap[dmyTextMatch[2].toLowerCase()] !== undefined) {
+            day = parseInt(dmyTextMatch[1], 10);
+            month = monthMap[dmyTextMatch[2].toLowerCase()];
+            year = parseInt(dmyTextMatch[3], 10);
+            if (year < 100) year += 2000;
+          } else if (mdyTextMatch && monthMap[mdyTextMatch[1].toLowerCase()] !== undefined) {
+            month = monthMap[mdyTextMatch[1].toLowerCase()];
+            day = parseInt(mdyTextMatch[2], 10);
+            year = parseInt(mdyTextMatch[3], 10);
             if (year < 100) year += 2000;
           } else {
             const fallback = new Date(combined);
@@ -5377,7 +5393,7 @@
           }
         }
 
-        const constructed = new Date(year, month, day, hour, minute, 0);
+        const constructed = new Date(year, month, day, hour, minute, second);
         return Number.isNaN(constructed.getTime()) ? new Date().toISOString() : constructed.toISOString();
       }
 
@@ -5457,7 +5473,7 @@
         const findCol = (patterns) =>
           headers.findIndex((h) => patterns.some((p) => (p instanceof RegExp ? p.test(h) : h === p || h.includes(p))));
 
-        const colDate = findCol(['tanggal', 'date', 'waktu', 'tgl', 'created']);
+        const colDate = findCol(['tanggal', 'date', 'waktu', 'tgl', 'created', 'timestamp', 'hari']);
         const colTime = findCol(['jam', 'time', 'pukul']);
         const colType = findCol(['jenis', 'tipe', 'type', 'arus', 'mutasi', 'dk', 'd/k', 'status', 'arah']);
         const colTitle = findCol(['judul', 'title', 'deskripsi', 'description', 'uraian', 'transaksi', 'nama transaksi', 'item']);
