@@ -5459,18 +5459,18 @@
 
         const colDate = findCol(['tanggal', 'date', 'waktu', 'tgl', 'created']);
         const colTime = findCol(['jam', 'time', 'pukul']);
-        const colType = findCol(['jenis', 'tipe', 'type', 'arus', 'mutasi', 'dk', 'd/k']);
+        const colType = findCol(['jenis', 'tipe', 'type', 'arus', 'mutasi', 'dk', 'd/k', 'status', 'arah']);
         const colTitle = findCol(['judul', 'title', 'deskripsi', 'description', 'uraian', 'transaksi', 'nama transaksi', 'item']);
         const colParty = findCol(['dari/kepada', 'dari', 'kepada', 'pihak', 'payee', 'merchant', 'penerima', 'pengirim', 'toko']);
         const colCategory = findCol([/^kategori$/, /^category$/, 'kategori', 'category', 'pos']);
         const colSubCategory = findCol(['sub kategori', 'subkategori', 'subcategory', 'sub_category', 'sub']);
         const colAccount = findCol([/^rekening$/, /^account$/, 'rekening', 'account', 'dompet', 'wallet', 'akun', 'sumber', 'dari rekening']);
         const colToAccount = findCol(['rekening tujuan', 'ke rekening', 'tujuan', 'to account', 'to_account']);
-        const colAmount = findCol(['nominal', 'jumlah', 'amount', 'nilai', 'total', 'harga', 'rp']);
+        const colAmount = findCol(['nominal', 'jumlah', 'amount', 'nilai', 'total', 'harga', 'rp', 'idr']);
         const colIncome = findCol(['pemasukan', 'masuk', 'income', 'kredit', 'credit', 'debit masuk']);
         const colExpense = findCol(['pengeluaran', 'keluar', 'expense', 'debet', 'debit']);
         const colNote = findCol(['catatan', 'note', 'notes', 'memo', 'keterangan']);
-
+        const colCurrency = findCol(['mata uang', 'currency', 'curr']);
         const accountMap = new Map();
         const categoryMap = new Map();
         const detectedBalancesMap = new Map();
@@ -5562,8 +5562,12 @@
           const rawCatText = getVal(colCategory).trim();
           const rawPartyText = getVal(colParty).trim();
           const rawTitleText = getVal(colTitle).trim();
+          const rawCurrency = getVal(colCurrency).trim();
+          const rawAmountStr = getVal(colAmount).trim();
           let amount = 0;
           let txType = 'expense';
+
+          const combinedTypeHint = `${rawType} ${rawCurrency}`.toLowerCase().trim();
 
           if (colIncome >= 0 || colExpense >= 0) {
             const incVal = Math.abs(parseLocalizedAmount(getVal(colIncome)));
@@ -5575,29 +5579,39 @@
               txType = 'expense';
               amount = expVal;
             }
-          } else if (colAmount >= 0 && getVal(colAmount) !== '') {
-            const signedAmt = parseLocalizedAmount(getVal(colAmount));
+          } else if (colAmount >= 0 && rawAmountStr !== '') {
+            const signedAmt = parseLocalizedAmount(rawAmountStr);
             amount = Math.abs(signedAmt);
-            if (/transfer|pindah|mutasi/i.test(rawType) || rawToAcc) {
+            const hasExplicitPlus = /^\s*\+/.test(rawAmountStr);
+            const hasExplicitMinus = /^\s*-/.test(rawAmountStr) || /^\s*\(.*\)\s*$/.test(rawAmountStr);
+
+            if (/transfer|pindah|mutasi/i.test(combinedTypeHint) || rawToAcc) {
               txType = 'transfer';
-            } else if (
-              /masuk|income|kredit|credit|terima|gaji|\+/i.test(rawType) ||
-              (signedAmt > 0 && !/keluar|expense|debet|debit|bayar|beli/i.test(rawType) && colType < 0)
-            ) {
-              txType = signedAmt < 0 ? 'expense' : colType < 0 && signedAmt > 0 ? 'expense' : 'income';
-            } else {
+            } else if (/\b(income|pemasukan|masuk|kredit|credit|cr)\b/i.test(combinedTypeHint)) {
+              txType = 'income';
+            } else if (/\b(expense|pengeluaran|keluar|debet|debit|dr)\b/i.test(combinedTypeHint)) {
               txType = 'expense';
+            } else if (hasExplicitMinus || signedAmt < 0) {
+              txType = 'expense';
+            } else if (hasExplicitPlus) {
+              txType = 'income';
+            } else if (/gaji|salary|bonus|thr|dividen|freelance|pendapatan|pemasukan/i.test(`${rawCatText} ${rawTitleText}`)) {
+              txType = 'income';
+            } else {
+              const rowHasIncomeFlag = row.some((cell) => /^(i|in|inc|income|pemasukan|masuk|\+)$/i.test(cell.trim()));
+              const rowHasExpenseFlag = row.some((cell) => /^(e|ex|exp|expense|pengeluaran|keluar|-)$/i.test(cell.trim()));
+              if (rowHasIncomeFlag && !rowHasExpenseFlag) {
+                txType = 'income';
+              } else {
+                txType = 'expense';
+              }
             }
           }
 
           if (amount <= 0) continue;
 
-          if (/transfer|pindah/i.test(rawType) || rawToAcc) {
+          if (/transfer|pindah|mutasi/i.test(combinedTypeHint) || rawToAcc) {
             txType = 'transfer';
-          } else if (/masuk|income|kredit|credit/i.test(rawType) && colIncome < 0) {
-            txType = 'income';
-          } else if (/keluar|expense|debet|debit/i.test(rawType) && colExpense < 0) {
-            txType = 'expense';
           }
 
           const srcAccObj = getOrCreateAccount(getVal(colAccount));
