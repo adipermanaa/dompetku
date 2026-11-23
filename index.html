@@ -516,7 +516,112 @@
       <!-- TAB 5: KATEGORI, CADANGAN DATA & PANDUAN PWA              -->
       <!-- ========================================================= -->
       <section id="tab-settings" class="hidden space-y-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3.5">
+        <!-- Menu Utama Tab Lainnya (Pilihan Aksi) -->
+        <div id="settings-hub-view" class="space-y-2.5">
+          <div class="px-1 pb-0.5">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Menu Lainnya</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Pilih pengaturan atau alat pengelolaan keuangan yang ingin dibuka</p>
+          </div>
+
+          <button type="button" data-settings-section="appearance" class="settings-hub-card w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3 text-left transition active:scale-[0.99]">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950/80 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-slate-900 dark:text-white">Pengelola Tema &amp; Tampilan</p>
+                <p id="hub-appearance-subtitle" class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">Mode terang/gelap, warna utama &amp; pengingat backup</p>
+              </div>
+            </div>
+            <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <button type="button" data-settings-section="categories" class="settings-hub-card w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3 text-left transition active:scale-[0.99]">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="w-11 h-11 rounded-2xl bg-orange-100 text-orange-600 dark:bg-orange-950/80 dark:text-orange-400 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-slate-900 dark:text-white">Pengelola Kategori</p>
+                <p id="hub-categories-subtitle" class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">Atur kategori utama, sub kategori &amp; ikon kustom</p>
+              </div>
+            </div>
+            <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <button type="button" id="btn-hub-month-closing" class="w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3 text-left transition active:scale-[0.99]">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/80 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-slate-900 dark:text-white">Tutup Buku Bulanan</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">Amankan sisa saldo surplus ke rekening tabungan</p>
+              </div>
+            </div>
+            <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <button type="button" data-settings-section="backup" class="settings-hub-card w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3 text-left transition active:scale-[0.99]">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="w-11 h-11 rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-950/80 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-slate-900 dark:text-white">Backup &amp; Ekspor Data</p>
+                <p id="hub-backup-subtitle" class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">Google Drive, ekspor CSV/JSON &amp; impor data lama</p>
+              </div>
+            </div>
+            <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <button type="button" data-settings-section="local-data" class="settings-hub-card w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3 text-left transition active:scale-[0.99]">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/80 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-slate-900 dark:text-white">Pengelola Data Lokal</p>
+                <p id="hub-local-data-subtitle" class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">Muat ulang data contoh atau reset transaksi</p>
+              </div>
+            </div>
+            <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Header Kembali ke Pilihan Menu Lainnya -->
+        <div id="settings-subview-header" class="hidden items-center gap-2.5">
+          <button id="btn-back-settings-hub" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Menu Lainnya</span>
+          </button>
+          <span id="settings-subview-title" class="text-sm font-extrabold text-slate-900 dark:text-white truncate">Pengaturan</span>
+        </div>
+
+        <!-- Sub-bagian 1: Pengelola Tema & Tampilan -->
+        <div id="settings-panel-appearance" class="settings-sub-panel hidden bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3.5">
           <div>
             <h3 class="text-base font-bold text-slate-900 dark:text-white">Tampilan &amp; Warna Aplikasi</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sesuaikan mode terang/gelap dan warna utama sesuai selera Anda.</p>
@@ -550,7 +655,8 @@
           </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
+        <!-- Sub-bagian 2: Pengelola Kategori -->
+        <div id="settings-panel-categories" class="settings-sub-panel hidden bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-base font-bold text-slate-900 dark:text-white">Kategori Utama &amp; Sub Kategori</h3>
@@ -572,25 +678,8 @@
           <div id="settings-category-list" class="space-y-2.5 pt-1"></div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Tutup Buku Bulanan</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pindahkan sisa saldo surplus bulan ini ke rekening tabungan atau dana darurat.</p>
-          </div>
-          <button id="btn-settings-month-closing" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 font-semibold text-sm transition active:scale-[0.99]">
-            <span class="flex items-center gap-2.5">
-              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Buka Menu Tutup Buku</span>
-            </span>
-            <svg class="w-4 h-4 opacity-80 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
+        <!-- Sub-bagian 3: Backup & Ekspor Data -->
+        <div id="settings-panel-backup" class="settings-sub-panel hidden bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
           <div>
             <h3 class="text-base font-bold text-slate-900 dark:text-white">Cadangan &amp; Ekspor Laporan</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Simpan salinan catatan keuangan ke Google Drive, iCloud Drive, atau Files iPhone.</p>
@@ -659,8 +748,12 @@
           </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">Pengaturan Data Lokal</h3>
+        <!-- Sub-bagian 4: Pengelola Data Lokal -->
+        <div id="settings-panel-local-data" class="settings-sub-panel hidden bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Pengaturan Data Lokal</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kelola data contoh atau bersihkan seluruh transaksi yang tersimpan di perangkat ini.</p>
+          </div>
 
           <button id="btn-seed-sample" type="button" class="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
             <span>Muat Ulang Data Contoh</span>
@@ -1930,6 +2023,7 @@
         catFormColor: 'orange',
         catFormCustomIcon: '',
         manageCategoryType: 'expense',
+        settingsSubSection: 'hub',
         gdriveFormat: 'json',
         gdriveClientId: '',
         gdriveAccessToken: '',
@@ -6265,6 +6359,69 @@
       // =========================================================
       // 12. NAVIGASI TAB & INISIALISASI EVENT LISTENER
       // =========================================================
+      function renderSettingsHub() {
+        const hubView = document.getElementById('settings-hub-view');
+        const subHeader = document.getElementById('settings-subview-header');
+        const subTitle = document.getElementById('settings-subview-title');
+        if (!hubView || !subHeader) return;
+
+        const sectionTitles = {
+          appearance: 'Pengelola Tema & Tampilan',
+          categories: 'Pengelola Kategori',
+          backup: 'Backup & Ekspor Data',
+          'local-data': 'Pengelola Data Lokal'
+        };
+
+        const activeThemeObj = ACCENT_THEMES[state.accentColor] || ACCENT_THEMES.indigo;
+        const modeLabels = { system: 'Otomatis', light: 'Terang', dark: 'Gelap' };
+        const appSubEl = document.getElementById('hub-appearance-subtitle');
+        if (appSubEl) {
+          appSubEl.textContent = `${modeLabels[state.themeMode] || 'Otomatis'} • ${activeThemeObj.label}`;
+        }
+
+        const catSubEl = document.getElementById('hub-categories-subtitle');
+        if (catSubEl) {
+          const mainCount = state.categories.filter((c) => !c.parentId).length;
+          const subCount = state.categories.filter((c) => c.parentId).length;
+          catSubEl.textContent = `${mainCount} kategori utama • ${subCount} sub kategori`;
+        }
+
+        const backupSubEl = document.getElementById('hub-backup-subtitle');
+        if (backupSubEl) {
+          backupSubEl.textContent = state.gdriveLastSync
+            ? 'Tersinkronisasi • Google Drive, CSV & JSON'
+            : 'Google Drive, ekspor CSV/JSON & impor data lama';
+        }
+
+        const localSubEl = document.getElementById('hub-local-data-subtitle');
+        if (localSubEl) {
+          localSubEl.textContent = `${state.transactions.length} transaksi tersimpan di perangkat ini`;
+        }
+
+        const isHub = !state.settingsSubSection || state.settingsSubSection === 'hub';
+        hubView.classList.toggle('hidden', !isHub);
+        subHeader.classList.toggle('hidden', isHub);
+        subHeader.classList.toggle('flex', !isHub);
+
+        if (!isHub && subTitle) {
+          subTitle.textContent = sectionTitles[state.settingsSubSection] || 'Pengaturan';
+        }
+
+        document.querySelectorAll('.settings-sub-panel').forEach((panel) => {
+          panel.classList.add('hidden');
+        });
+
+        if (!isHub) {
+          const targetPanel = document.getElementById(`settings-panel-${state.settingsSubSection}`);
+          if (targetPanel) {
+            targetPanel.classList.remove('hidden');
+          }
+          if (state.settingsSubSection === 'categories') {
+            renderSettingsCategories();
+          }
+        }
+      }
+
       function switchTab(tabName) {
         state.activeTab = tabName;
 
@@ -6311,7 +6468,10 @@
         if (tabName === 'analytics') renderAnalytics();
         if (tabName === 'leak-analysis') renderLeakAnalysis();
         if (tabName === 'accounts') renderAccountsTab();
-        if (tabName === 'settings') renderSettingsCategories();
+        if (tabName === 'settings') {
+          state.settingsSubSection = 'hub';
+          renderSettingsHub();
+        }
       }
 
       function renderAllViews() {
@@ -6319,7 +6479,10 @@
         if (state.activeTab === 'analytics') renderAnalytics();
         if (state.activeTab === 'leak-analysis') renderLeakAnalysis();
         if (state.activeTab === 'accounts') renderAccountsTab();
-        if (state.activeTab === 'settings') renderSettingsCategories();
+        if (state.activeTab === 'settings') {
+          renderSettingsHub();
+          renderSettingsCategories();
+        }
         updateGDriveStatusUI();
       }
 
@@ -6493,7 +6656,20 @@
         });
 
         document.getElementById('btn-open-month-closing').addEventListener('click', openMonthClosingModal);
-        document.getElementById('btn-settings-month-closing').addEventListener('click', openMonthClosingModal);
+        document.getElementById('btn-hub-month-closing').addEventListener('click', openMonthClosingModal);
+
+        document.querySelectorAll('.settings-hub-card').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.settingsSubSection = btn.getAttribute('data-settings-section') || 'hub';
+            renderSettingsHub();
+          });
+        });
+
+        document.getElementById('btn-back-settings-hub').addEventListener('click', () => {
+          state.settingsSubSection = 'hub';
+          renderSettingsHub();
+        });
+
         document.getElementById('btn-close-month-closing').addEventListener('click', closeMonthClosingModal);
         document.getElementById('btn-save-month-closing').addEventListener('click', handleSaveMonthClosing);
         document.getElementById('closing-amount').addEventListener('input', (e) => {
