@@ -5346,9 +5346,32 @@
       }
 
       function parseFlexibleDate(dateRaw, timeRaw = '') {
-        let cleanDate = String(dateRaw || '').trim().replace(/^["']|["']$/g, '');
-        const cleanTime = String(timeRaw || '').trim().replace(/^["']|["']$/g, '');
+        let cleanDate = String(dateRaw || '')
+          .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ')
+          .trim()
+          .replace(/^["']+|["']+$/g, '')
+          .trim();
+        const cleanTime = String(timeRaw || '')
+          .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ')
+          .trim()
+          .replace(/^["']+|["']+$/g, '')
+          .trim();
         if (!cleanDate) return new Date().toISOString();
+
+        // Jika berisi angka Excel serial date (mis. 46348 atau 46348.5)
+        if (/^\d{5}(?:\.\d+)?$/.test(cleanDate)) {
+          const serial = parseFloat(cleanDate);
+          const utcDays = Math.floor(serial - 25569);
+          const d = new Date(utcDays * 86400 * 1000);
+          if (!Number.isNaN(d.getTime())) {
+            const frac = serial - Math.floor(serial);
+            const totalSecs = Math.round(frac * 86400);
+            const h = Math.floor(totalSecs / 3600);
+            const m = Math.floor((totalSecs % 3600) / 60);
+            const s = totalSecs % 60;
+            return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), h || 12, m, s).toISOString();
+          }
+        }
 
         // Hapus nama hari di awal/akhir string jika ada (mis. "Senin, 15/11/2026" atau "15 Nov 2026 (Min)")
         cleanDate = cleanDate
@@ -5488,7 +5511,8 @@
 
       function buildCsvImportPreview(csvText, filename) {
         const cleanText = String(csvText || '').replace(/^\uFEFF/, '');
-        const sampleLines = cleanText.split(/\r?\n/).slice(0, 6).join('\n');
+        const lines = cleanText.split(/\r?\n/).filter((l) => l.trim() !== '');
+        const sampleLines = lines.slice(0, 15).join('\n');
         const semiCount = (sampleLines.match(/;/g) || []).length;
         const commaCount = (sampleLines.match(/,/g) || []).length;
         const tabCount = (sampleLines.match(/\t/g) || []).length;
@@ -5499,27 +5523,40 @@
           throw new Error('File CSV kosong atau tidak memiliki baris data');
         }
 
+        const normalizeHeaderCell = (cell) =>
+          String(cell || '')
+            .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ')
+            .replace(/^["'\s]+|["'\s]+$/g, '')
+            .toLowerCase()
+            .trim();
+
         // Cari baris header tabel secara otomatis (memindai hingga 25 baris pertama agar melewati ringkasan saldo atas)
         let headerRowIdx = 0;
         const headerKeywords = [
-          'tanggal', 'date', 'jenis', 'judul', 'payee', 'kategori', 'category',
+          'tanggal', 'date', 'waktu', 'tgl', 'jenis', 'judul', 'payee', 'kategori', 'category',
           'nominal', 'jumlah', 'amount', 'pemasukan', 'pengeluaran', 'debit', 'credit',
           'rekening', 'account', 'subcategory'
         ];
         for (let idx = 0; idx < Math.min(rows.length, 25); idx++) {
-          const joinedRow = rows[idx].map((c) => c.toLowerCase().trim()).join('|');
-          const matchCount = headerKeywords.filter((kw) => joinedRow.includes(kw)).length;
-          if (rows[idx].length >= 3 && matchCount >= 3) {
+          const normCells = rows[idx].map(normalizeHeaderCell);
+          const matchCount = normCells.filter((cell) =>
+            headerKeywords.some((kw) => cell === kw || cell.includes(kw))
+          ).length;
+          if (rows[idx].length >= 3 && matchCount >= 2) {
             headerRowIdx = idx;
             break;
           }
         }
 
-        const headers = rows[headerRowIdx].map((h) => h.toLowerCase().trim());
+        const headers = rows[headerRowIdx].map(normalizeHeaderCell);
         const findCol = (patterns) =>
           headers.findIndex((h) => patterns.some((p) => (p instanceof RegExp ? p.test(h) : h === p || h.includes(p))));
 
         let colDate = findCol([
+          /^tanggal$/,
+          /^date$/,
+          /^tgl$/,
+          /^waktu$/,
           'tanggal',
           'date',
           'waktu',
@@ -5531,55 +5568,117 @@
           'dt',
           'time'
         ]);
-        const colTime = findCol(['jam', 'time', 'pukul']);
-        if (colDate === colTime && colDate !== -1) {
-          // Pastikan jika hanya ada satu kolom "Time" / "Date", kolom tersebut dipakai sebagai colDate
-        }
-        // Fallback: jika header tanggal tidak dikenali namanya, cari otomatis kolom yang isinya berpola tanggal di baris data pertama
-        if (colDate === -1 && rows[headerRowIdx + 1]) {
-          const sampleDataRow = rows[headerRowIdx + 1];
-          const detectedDateIdx = sampleDataRow.findIndex((cell) => {
-            const v = String(cell || '').trim();
+        const colTime = findCol([/^jam$/, /^time$/, /^pukul$/, 'jam', 'pukul']);
+        // Fallback: jika header tanggal tidak dikenali namanya, pindai beberapa baris data pertama untuk mencari kolom berpola tanggal
+        if (colDate === -1) {
+          const isDateLikeValue = (rawVal) => {
+            const v = String(rawVal || '').replace(/^["'\s]+|["'\s]+$/g, '').trim();
+            if (!v) return false;
             return (
               /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(v) ||
               /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(v) ||
+              /^\d{8}$/.test(v) ||
+              /^\d{5}(?:\.\d+)?$/.test(v) ||
               /\d{1,2}[\s\-/.,]+(?:jan|feb|mar|apr|mei|may|jun|jul|agu|ags|aug|sep|okt|oct|nov|des|dec)[a-z]*[\s\-/.,]+\d{2,4}/i.test(v)
             );
-          });
-          if (detectedDateIdx !== -1) colDate = detectedDateIdx;
-        }
-        const colType = findCol(['jenis', 'tipe', 'type', 'arus', 'mutasi', 'dk', 'd/k', 'status', 'arah']);
-        const colTitle = findCol(['judul', 'title', 'deskripsi', 'description', 'uraian', 'transaksi', 'nama transaksi', 'item']);
-        const colParty = findCol(['dari/kepada', 'dari', 'kepada', 'pihak', 'payee', 'merchant', 'penerima', 'pengirim', 'toko']);
-        const colCategory = findCol([/^kategori$/, /^category$/, 'kategori', 'category', 'pos']);
-        const colSubCategory = findCol(['sub kategori', 'subkategori', 'subcategory', 'sub_category', 'sub']);
-        const colAccount = findCol([/^rekening$/, /^account$/, 'rekening', 'account', 'dompet', 'wallet', 'akun', 'sumber', 'dari rekening']);
-        const colToAccount = findCol(['rekening tujuan', 'ke rekening', 'tujuan', 'to account', 'to_account']);
-        const colAmount = findCol(['nominal', 'jumlah', 'amount', 'nilai', 'total', 'harga', 'rp', 'idr']);
-        const colIncome = findCol(['pemasukan', 'masuk', 'income', 'kredit', 'credit', 'debit masuk']);
-        const colExpense = findCol(['pengeluaran', 'keluar', 'expense', 'debet', 'debit']);
-        const colNote = findCol(['catatan', 'note', 'notes', 'memo', 'keterangan']);
-        const colCurrency = findCol(['mata uang', 'currency', 'curr']);
-        const accountMap = new Map();
-        const categoryMap = new Map();
-        const detectedBalancesMap = new Map();
-
-        // Ekstrak ringkasan saldo awal rekening jika tersedia di baris-baris sebelum header tabel
-        for (let pre = 0; pre < headerRowIdx; pre++) {
-          const preRow = rows[pre];
-          if (preRow.length >= 2) {
-            const labelCell = (preRow[0] || '').trim();
-            const valCell = (preRow[1] || '').trim();
-            if (
-              labelCell &&
-              valCell &&
-              !/account balances|total|saldo total|ringkasan/i.test(labelCell) &&
-              /(?:idr|rp|\d)/i.test(valCell)
-            ) {
-              detectedBalancesMap.set(labelCell.toLowerCase(), parseLocalizedAmount(valCell));
+          };
+          for (let rCheck = headerRowIdx + 1; rCheck < Math.min(rows.length, headerRowIdx + 8); rCheck++) {
+            const detectedDateIdx = rows[rCheck].findIndex(isDateLikeValue);
+            if (detectedDateIdx !== -1) {
+              colDate = detectedDateIdx;
+              break;
             }
           }
         }
+
+        const colType = findCol([/^jenis$/, /^type$/, 'jenis', 'type', 'tipe', 'transaksi', 'mutasi']);
+        const colTitle = findCol([/^judul$/, /^title$/, 'judul', 'title', 'deskripsi', 'description', 'keterangan', 'uraian', 'memo', 'item']);
+        const colParty = findCol([
+          'dari/kepada',
+          'dari / kepada',
+          'penerima',
+          'pengirim',
+          'payee',
+          'payer',
+          'merchant',
+          'toko',
+          'pihak',
+          'kepada',
+          'dari',
+          'tujuan'
+        ]);
+        const colCategory = findCol([/^kategori$/, /^category$/, 'kategori', 'category', 'pos']);
+        const colSubCategory = findCol([
+          /^sub\s*kategori$/,
+          /^subcategory$/,
+          'sub kategori',
+          'subkategori',
+          'subcategory',
+          'sub-kategori',
+          'sub_category'
+        ]);
+        const colAccount = findCol([
+          /^rekening$/,
+          /^account$/,
+          /^dompet$/,
+          'rekening',
+          'account',
+          'dompet',
+          'wallet',
+          'sumber',
+          'akun',
+          'kas',
+          'bank'
+        ]);
+        const colToAccount = findCol([
+          'rekening tujuan',
+          'ke rekening',
+          'to account',
+          'target account',
+          'tujuan rekening',
+          'destination'
+        ]);
+        const colAmount = findCol([
+          /^nominal$/,
+          /^jumlah$/,
+          /^amount$/,
+          'nominal',
+          'jumlah',
+          'amount',
+          'nilai',
+          'total',
+          'harga',
+          'rp',
+          'idr'
+        ]);
+        const colCurrency = findCol([/^currency$/, /^mata\s*uang$/, 'currency', 'mata uang', 'kurs']);
+        const colIncome = findCol([/^pemasukan$/, /^income$/, /^masuk$/, 'pemasukan', 'income', 'kredit', 'credit']);
+        const colExpense = findCol([/^pengeluaran$/, /^expense$/, /^keluar$/, 'pengeluaran', 'expense', 'debet', 'debit']);
+        const colNote = findCol([/^catatan$/, /^note$/, /^notes$/, 'catatan', 'note', 'notes', 'komentar', 'remark']);
+
+        // Deteksi tabel ringkasan saldo rekening di baris-baris atas sebelum header utama (jika ada)
+        const detectedBalancesMap = new Map();
+        for (let pre = 0; pre < headerRowIdx; pre++) {
+          const preRow = rows[pre];
+          if (preRow.length >= 2) {
+            const label = String(preRow[0] || '').trim();
+            if (label && !/total|jumlah|ringkasan|laporan|periode/i.test(label)) {
+              for (let c = 1; c < preRow.length; c++) {
+                const cellStr = String(preRow[c] || '').trim();
+                if (cellStr && /[0-9]/.test(cellStr) && !/\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/.test(cellStr)) {
+                  const val = parseLocalizedAmount(cellStr);
+                  if (val !== 0) {
+                    detectedBalancesMap.set(label.toLowerCase(), val);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        const accountMap = new Map();
+        const categoryMap = new Map();
 
         const getOrCreateAccount = (rawName) => {
           const clean = (rawName || '').trim() || 'Dompet Utama';
